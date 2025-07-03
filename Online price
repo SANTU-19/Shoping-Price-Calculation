@@ -1,0 +1,94 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# In-memory store
+store = {}
+
+def add_item():
+    name = item_name.get().strip()
+    try:
+        price = float(item_price.get())
+    except ValueError:
+        messagebox.showerror("Invalid", "Enter valid price")
+        return
+
+    if name:
+        store[name] = price
+        update_dropdown()
+        item_name.delete(0, tk.END)
+        item_price.delete(0, tk.END)
+        messagebox.showinfo("Success", f"{name} added/updated!")
+    else:
+        messagebox.showerror("Error", "Item name cannot be empty")
+
+def update_dropdown():
+    item_menu['menu'].delete(0, 'end')
+    for name in store:
+        item_menu['menu'].add_command(label=name, command=tk._setit(selected_item, name))
+    if store:
+        selected_item.set(next(iter(store)))  # Select first item by default
+
+def calculate_price():
+    item = selected_item.get()
+    qty_str = quantity_entry.get().strip().lower()
+
+    if item not in store:
+        messagebox.showerror("Error", "Select a valid item")
+        return
+
+    try:
+        if "kg" in qty_str:
+            qty = float(qty_str.replace("kg", "").strip())
+        elif "g" in qty_str:
+            qty = float(qty_str.replace("g", "").strip()) / 1000
+        else:
+            qty = float(qty_str) / 1000  # Assume gram
+    except ValueError:
+        messagebox.showerror("Error", "Enter quantity like 500g or 1.5kg")
+        return
+
+    price_per_kg = store[item]
+    total = qty * price_per_kg
+    result_label.config(text=f"{qty*1000:.0f}g of {item} costs ₹{total:.2f}")
+
+# Setup window
+root = tk.Tk()
+root.title("Store Price Calculator")
+root.geometry("400x400")
+
+# Title
+tk.Label(root, text="Store Price Calculator", font=("Arial", 16, "bold")).pack(pady=10)
+
+# Item input
+tk.Label(root, text="Item Name:").pack()
+item_name = tk.Entry(root)
+item_name.pack()
+
+tk.Label(root, text="Price per Kg (₹):").pack()
+item_price = tk.Entry(root)
+item_price.pack()
+
+tk.Button(root, text="Add / Update Item", command=add_item).pack(pady=5)
+
+# Divider
+tk.Label(root, text="-----------------------------").pack()
+
+# Item selector
+tk.Label(root, text="Select Item:").pack()
+selected_item = tk.StringVar()
+item_menu = tk.OptionMenu(root, selected_item, "")
+item_menu.pack()
+
+# Quantity input
+tk.Label(root, text="Enter Quantity (e.g., 500g or 1.5kg):").pack()
+quantity_entry = tk.Entry(root)
+quantity_entry.pack()
+
+tk.Button(root, text="Calculate Price", command=calculate_price).pack(pady=10)
+
+# Result
+result_label = tk.Label(root, text="", font=("Arial", 12))
+result_label.pack(pady=10)
+
+# Run
+root.mainloop()
